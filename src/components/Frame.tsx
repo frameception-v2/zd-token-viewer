@@ -13,6 +13,8 @@ import {
   CardDescription,
   CardContent,
 } from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
+import { Button } from "~/components/ui/button";
 
 import { config } from "~/components/providers/WagmiProvider";
 import { truncateAddress } from "~/lib/truncateAddress";
@@ -20,19 +22,66 @@ import { base, optimism } from "wagmi/chains";
 import { useSession } from "next-auth/react";
 import { createStore } from "mipd";
 import { Label } from "~/components/ui/label";
-import { PROJECT_TITLE } from "~/lib/constants";
+import { PROJECT_TITLE, MOCK_TOKENS } from "~/lib/constants";
 
-function ExampleCard() {
+function TokenViewer() {
+  const [address, setAddress] = useState("");
+  const [tokens, setTokens] = useState<typeof MOCK_TOKENS>([]);
+
+  const handleLookup = useCallback(() => {
+    // Simulate token lookup with mock data
+    setTokens(MOCK_TOKENS);
+  }, []);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Welcome to the Frame Template</CardTitle>
+        <CardTitle>Token Viewer</CardTitle>
         <CardDescription>
-          This is an example card that you can customize or remove
+          Paste an Ethereum address to view token balances
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Label>Place content in a Card here.</Label>
+      <CardContent className="space-y-4">
+        <div className="flex gap-2">
+          <Input
+            placeholder="0x..."
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+          />
+          <Button onClick={handleLookup}>Lookup</Button>
+        </div>
+        
+        {tokens.length > 0 && (
+          <div className="space-y-2">
+            <Label>Token Balances:</Label>
+            <div className="space-y-1">
+              {tokens.map((token) => (
+                <div key={token.symbol} className="flex justify-between text-sm">
+                  <span>{token.name}</span>
+                  <span>
+                    {token.balance} {token.symbol}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="pt-4 border-t mt-4">
+          <Label className="block mb-2">What you can do:</Label>
+          <ul className="text-sm space-y-1 list-disc pl-4">
+            <li>View mock token balances</li>
+            <li>Simulate wallet lookup</li>
+            <li>See demo data</li>
+          </ul>
+
+          <Label className="block mt-4 mb-2">What you can't do yet:</Label>
+          <ul className="text-sm space-y-1 list-disc pl-4 text-red-500">
+            <li>Access real blockchain data</li>
+            <li>View NFT collections</li>
+            <li>See transaction history</li>
+          </ul>
+        </div>
       </CardContent>
     </Card>
   );
@@ -42,86 +91,19 @@ export default function Frame() {
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [context, setContext] = useState<Context.FrameContext>();
 
-  const [added, setAdded] = useState(false);
-
-  const [addFrameResult, setAddFrameResult] = useState("");
-
-  const addFrame = useCallback(async () => {
-    try {
-      await sdk.actions.addFrame();
-    } catch (error) {
-      if (error instanceof AddFrame.RejectedByUser) {
-        setAddFrameResult(`Not added: ${error.message}`);
-      }
-
-      if (error instanceof AddFrame.InvalidDomainManifest) {
-        setAddFrameResult(`Not added: ${error.message}`);
-      }
-
-      setAddFrameResult(`Error: ${error}`);
-    }
-  }, []);
-
   useEffect(() => {
     const load = async () => {
       const context = await sdk.context;
-      if (!context) {
-        return;
-      }
-
       setContext(context);
-      setAdded(context.client.added);
-
-      // If frame isn't already added, prompt user to add it
-      if (!context.client.added) {
-        addFrame();
-      }
-
-      sdk.on("frameAdded", ({ notificationDetails }) => {
-        setAdded(true);
-      });
-
-      sdk.on("frameAddRejected", ({ reason }) => {
-        console.log("frameAddRejected", reason);
-      });
-
-      sdk.on("frameRemoved", () => {
-        console.log("frameRemoved");
-        setAdded(false);
-      });
-
-      sdk.on("notificationsEnabled", ({ notificationDetails }) => {
-        console.log("notificationsEnabled", notificationDetails);
-      });
-      sdk.on("notificationsDisabled", () => {
-        console.log("notificationsDisabled");
-      });
-
-      sdk.on("primaryButtonClicked", () => {
-        console.log("primaryButtonClicked");
-      });
-
-      console.log("Calling ready");
       sdk.actions.ready({});
-
-      // Set up a MIPD Store, and request Providers.
-      const store = createStore();
-
-      // Subscribe to the MIPD Store.
-      store.subscribe((providerDetails) => {
-        console.log("PROVIDER DETAILS", providerDetails);
-        // => [EIP6963ProviderDetail, EIP6963ProviderDetail, ...]
-      });
     };
+    
     if (sdk && !isSDKLoaded) {
-      console.log("Calling load");
       setIsSDKLoaded(true);
       load();
-      return () => {
-        sdk.removeAllListeners();
-      };
+      return () => sdk.removeAllListeners();
     }
-  }, [isSDKLoaded, addFrame]);
+  }, [isSDKLoaded]);
 
   if (!isSDKLoaded) {
     return <div>Loading...</div>;
@@ -140,7 +122,7 @@ export default function Frame() {
         <h1 className="text-2xl font-bold text-center mb-4 text-neutral-900">
           {PROJECT_TITLE}
         </h1>
-        <ExampleCard />
+        <TokenViewer />
       </div>
     </div>
   );
