@@ -75,7 +75,7 @@ function TokenViewer() {
             <li>See demo data</li>
           </ul>
 
-          <Label className="block mt-4 mb-2">What you can't do yet:</Label>
+          <Label className="block mt-4 mb-2">What you can&apos;t do yet:</Label>
           <ul className="text-sm space-y-1 list-disc pl-4 text-red-500">
             <li>Access real blockchain data</li>
             <li>View NFT collections</li>
